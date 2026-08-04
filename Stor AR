@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Katalog Langganan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<style>
+  :root{
+    --ink:#1c1b1a;
+    --paper:#eef1ea;
+    --card:#ffffff;
+    --line:#d8dcd0;
+    --accent:#2f6f4e;
+    --accent-dark:#204f38;
+    --danger:#b5484a;
+    --muted:#6b6f63;
+    --focus:#1c6dd0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:48px 20px;
+    background:
+      radial-gradient(circle at 15% 10%, #f4f6ee 0, transparent 45%),
+      var(--paper);
+    font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+    color:var(--ink);
+  }
+
+  .wrap{ width:100%; max-width:460px; }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+
+  h1{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size:32px;
+    line-height:1.1;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+
+  .sub{
+    color:var(--muted);
+    font-size:14.5px;
+    margin:0 0 28px;
+    line-height:1.5;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    box-shadow:0 1px 2px rgba(28,27,26,.04);
+  }
+
+  label.field-label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+
+  .select-shell{
+    position:relative;
+  }
+
+  select{
+    width:100%;
+    padding:13px 40px 13px 14px;
+    border:1.5px solid var(--line);
+    border-radius:9px;
+    font-size:15.5px;
+    background:var(--card);
+    color:var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+    cursor:pointer;
+    font-family:inherit;
+    transition:border-color .15s ease;
+  }
+
+  select:hover{ border-color:#b9c0ac; }
+  select:focus{
+    outline:none;
+    border-color:var(--focus);
+    box-shadow:0 0 0 3px rgba(28,109,208,.15);
+  }
+
+  .select-shell::after{
+    content:"";
+    position:absolute;
+    right:15px; top:50%;
+    width:9px; height:9px;
+    border-right:2px solid var(--muted);
+    border-bottom:2px solid var(--muted);
+    transform:translateY(-65%) rotate(45deg);
+    pointer-events:none;
+  }
+
+  optgroup{ font-weight:700; color:var(--ink); font-style:normal; }
+  option{ font-weight:400; padding:6px; }
+
+  .status{
+    font-size:13.5px;
+    color:var(--muted);
+    margin-top:10px;
+    min-height:18px;
+  }
+  .status.error{ color:var(--danger); }
+
+  .product-card{
+    display:none;
+    margin-top:22px;
+    padding-top:20px;
+    border-top:1px dashed var(--line);
+  }
+  .product-card.active{
+    display:block;
+    animation:rise .25s ease-out;
+  }
+
+  @keyframes rise{
+    from{opacity:0; transform:translateY(6px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .product-name{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size:22px;
+    margin:0 0 4px;
+  }
+
+  .price{
+    font-size:30px;
+    font-weight:700;
+    color:var(--accent-dark);
+    margin:6px 0 12px;
+    letter-spacing:-0.01em;
+  }
+  .price sup{ font-size:15px; font-weight:600; margin-right:2px; }
+
+  .desc{
+    color:#4b4f43;
+    font-size:14.5px;
+    line-height:1.6;
+    margin:0 0 22px;
+  }
+
+  .btn{
+    width:100%;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:14px;
+    font-size:15.5px;
+    font-weight:600;
+    border-radius:9px;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+    font-family:inherit;
+  }
+  .btn:hover{ background:var(--accent-dark); }
+  .btn:active{ transform:scale(.99); }
+  .btn:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(47,111,78,.3);
+  }
+
+  .footnote{
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    margin-top:18px;
+  }
+
+  .confirm-box{
+    display:none;
+    margin-top:16px;
+    padding:14px 16px;
+    background:#f2f7f0;
+    border:1px solid #cfe3c9;
+    border-radius:9px;
+    font-size:14px;
+    color:#245239;
+    line-height:1.55;
+  }
+  .confirm-box.show{ display:block; animation:rise .2s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Pakej Langganan</div>
+  <h1>Pilih pakej anda</h1>
+  <p class="sub">Semua pakej dimuat terus dari senarai harga terkini. Pilih satu untuk lihat butiran penuh.</p>
+
+  <div class="card">
+    <label class="field-label" for="katalogDropdown">Pakej</label>
+    <div class="select-shell">
+      <select id="katalogDropdown" onchange="paparProduk()">
+        <option value="">Sedang memuat turun data…</option>
+      </select>
+    </div>
+    <div id="statusMsg" class="status"></div>
+
+    <div id="paparanProduk" class="product-card">
+      <h3 id="namaProduk" class="product-name">Nama Produk</h3>
+      <div id="hargaProduk" class="price">RM 0.00</div>
+      <p id="descProduk" class="desc">Penerangan produk akan dipaparkan di sini.</p>
+      <button class="btn" onclick="beliSekarang()">Beli Sekarang (WhatsApp)</button>
+      <div id="confirmBox" class="confirm-box"></div>
+    </div>
+  </div>
+
+  <div class="footnote">Harga tertakluk kepada perubahan tanpa notis terdahulu.</div>
+</div>
+
+<script>
+  // SILA TUKAR: Masukkan nombor telefon WhatsApp anda (Mesti bermula dengan 60 tanpa tanda + atau sengkang)
+  const nomborWhatsApp = "60123456789"; 
+
+  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShrhxgvrRE2J6InatA11dQmLlMczzcgbbasCol8jKqGPY2YGxhElenNuUDtnke0MXQETN6CD4pWtxQ/pub?output=csv";
+
+  let senaraiProduk = {};
+  let produkSemasa = null;
+
+  const dropdownEl = document.getElementById("katalogDropdown");
+  const statusEl = document.getElementById("statusMsg");
+
+  fetch(csvUrl, { cache: "no-store" })
+    .then(response => {
+      if (!response.ok) throw new Error("Masalah talian atau Google Sheets");
+      return response.text();
+    })
+    .then(csvText => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+          binaDropdown(results.data);
+        }
+      });
+    })
+    .catch(error => {
+      console.error("Ralat dikesan:", error);
+      dropdownEl.innerHTML = '<option value="">-- Ralat memuat data --</option>';
+      statusEl.textContent = "Gagal memuat katalog. Pastikan Google Sheet ditetapkan ke 'Publish to Web'.";
+      statusEl.classList.add("error");
+    });
+
+  function formatHarga(mentah) {
+    if (mentah === undefined || mentah === null) return "";
+    const bersih = String(mentah).replace(/[^0-9.]/g, "");
+    const nombor = parseFloat(bersih);
+    if (isNaN(nombor)) return String(mentah).trim();
+    return nombor.toFixed(2);
+  }
+
+  function binaDropdown(data) {
+    dropdownEl.innerHTML = '<option value="">-- Pilih Pakej Langganan --</option>';
+    senaraiProduk = {};
+
+    const kumpulan = new Map();
+    let adaData = false;
+
+    data.forEach((item, index) => {
+      const kategori = item["Kategori"] || item["kategori"] || item["KATEGORI"] || "Lain-lain";
+      const nama = item["Nama"] || item["nama"] || item["NAMA"];
+      const harga = item["Harga"] || item["harga"] || item["HARGA"];
+      const deskripsi = item["Deskripsi"] || item["deskripsi"] || item["DESKRIPSI"] || "";
+
+      if (!nama || !harga) return;
+      adaData = true;
+
+      const id = "p" + index;
+      senaraiProduk[id] = {
+        Nama: nama.trim(),
+        Harga: formatHarga(harga),
+        Deskripsi: deskripsi.trim()
+      };
+
+      if (!kumpulan.has(kategori)) kumpulan.set(kategori, []);
+      kumpulan.get(kategori).push(id);
+    });
+
+    if (!adaData) {
+      dropdownEl.innerHTML = '<option value="">-- Tiada data --</option>';
+      statusEl.textContent = "Tiada produk dijumpai. Semak nama lajur di Baris 1 Google Sheets.";
+      statusEl.classList.add("error");
+      return;
+    }
+
+    kumpulan.forEach((ids, kategori) => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = kategori;
+      ids.forEach(id => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = senaraiProduk[id].Nama;
+        optgroup.appendChild(option);
+      });
+      dropdownEl.appendChild(optgroup);
+    });
+
+    statusEl.textContent = "";
+    statusEl.classList.remove("error");
+  }
+
+  function paparProduk() {
+    const id = dropdownEl.value;
+    const paparan = document.getElementById("paparanProduk");
+    const confirmBox = document.getElementById("confirmBox");
+    confirmBox.classList.remove("show");
+    confirmBox.textContent = "";
+
+    if (id !== "" && senaraiProduk[id]) {
+      produkSemasa = senaraiProduk[id];
+      document.getElementById("namaProduk").textContent = produkSemasa.Nama;
+      document.getElementById("hargaProduk").innerHTML =
+        '<sup>RM</sup>' + produkSemasa.Harga;
+      document.getElementById("descProduk").textContent =
+        produkSemasa.Deskripsi || "Tiada penerangan tambahan buat masa ini.";
+      paparan.classList.add("active");
+    } else {
+      produkSemasa = null;
+      paparan.classList.remove("active");
+    }
+  }
+
+  function beliSekarang() {
+    if (!produkSemasa) return;
+    
+    const confirmBox = document.getElementById("confirmBox");
+    confirmBox.textContent = "Membuka aplikasi WhatsApp...";
+    confirmBox.classList.add("show");
+
+    // Format teks untuk dihantar ke WhatsApp
+    const mesej = `Hai, saya berminat untuk melanggan:\n\n📦 Pakej: ${produkSemasa.Nama}\n💰 Harga: RM ${produkSemasa.Harga}\n\nMohon berikan butiran pembayaran.`;
+    
+    // Convert teks kepada URL-friendly
+    const mesejURL = encodeURIComponent(mesej);
+    
+    // Buka tab baharu terus ke WhatsApp
+    window.open(`https://wa.me/${nomborWhatsApp}?text=${mesejURL}`, '_blank');
+  }
+</script>
+
+</body>
+</html>
