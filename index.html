@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stor AR - Katalog Rasmi</title>
+
+<!-- Menggunakan Font Moden -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+  /* --- WARNA DAY MODE (DEFAULT) --- */
+  :root {
+    --bg-color: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --primary-btn: #0f172a;
+    --primary-hover: #334155;
+    --accent-price: #059669;
+    --border-color: #e2e8f0;
+    --tab-bg: #f8fafc;
+    --shopee: #ee4d2d;
+    --shopee-hover: #d73a1e;
+    --whatsapp: #25D366;
+    --download: #3b82f6;
+    --download-hover: #2563eb;
+    --guide-bg: #eff6ff;
+    --guide-border: #bfdbfe;
+    --qr-bg: #fff1f2;
+    --qr-border: #fecdd3;
+    --qr-text: #be123c;
+  }
+
+  /* --- WARNA NIGHT MODE --- */
+  body.dark-mode {
+    --bg-color: #020617;
+    --card-bg: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary-btn: #3b82f6; 
+    --primary-hover: #2563eb;
+    --accent-price: #10b981;
+    --border-color: #1e293b;
+    --tab-bg: #020617;
+    --guide-bg: #172554;
+    --guide-border: #1e3a8a;
+    --qr-bg: #4c0519;
+    --qr-border: #881337;
+    --qr-text: #fecdd3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 30px 15px;
+    background-color: var(--bg-color);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    transition: background-color 0.3s ease;
+  }
+
+  .main-wrapper {
+    width: 100%;
+    max-width: 460px;
+    background: var(--card-bg);
+    padding: 32px 24px;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1;
+    transition: background-color 0.3s ease;
+  }
+
+  /* --- BUTTON TOGGLE THEME --- */
+  .theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: var(--tab-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease;
+  }
+  .theme-toggle:hover {
+    transform: scale(1.05);
+    background: var(--border-color);
+  }
+
+  .header { text-align: center; margin-bottom: 32px; padding-top: 10px; }
+  .header h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.5px; }
+  .header p { color: var(--text-muted); font-size: 14.5px; margin: 0; }
+
+  /* --- TAB STYLES --- */
+  .tab-menu {
+    display: flex; background: var(--tab-bg); padding: 6px;
+    border-radius: 16px; margin-bottom: 24px; border: 1px solid var(--border-color);
+  }
+  .tab-btn {
+    flex: 1; border: none; background: transparent; padding: 12px 10px;
+    border-radius: 12px; font-weight: 600; font-size: 13.5px;
+    color: var(--text-muted); cursor: pointer; transition: all 0.3s ease;
+    font-family: inherit;
+  }
+  .tab-btn.active {
+    background: var(--card-bg); color: var(--text-main);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  /* --- CONTENT STYLES --- */
+  .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
+  .tab-content.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  label.field-label {
+    display: block; font-size: 12.5px; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .modern-select {
+    width: 100%; padding: 16px; border: 1.5px solid var(--border-color);
+    border-radius: 14px; font-size: 15.5px; font-weight: 500;
+    color: var(--text-main); background-color: var(--card-bg);
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    font-family: inherit; transition: all 0.2s;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%207.5L10%2012.5L15%207.5%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20fill%3D%22none%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat; background-position: right 16px center; background-size: 20px;
+  }
+  .modern-select:focus { outline: none; border-color: var(--text-main); }
+  
+  optgroup { font-weight: 700; color: var(--text-main); background: var(--card-bg); }
+  option { font-weight: 500; background: var(--card-bg); }
+
+  /* --- PRODUCT CARD STYLES --- */
+  .product-card {
+    display: none; margin-top: 24px; background: var(--tab-bg);
+    border: 1px solid var(--border-color); padding: 24px; border-radius: 16px;
+  }
+  .product-card.show { display: block; animation: fadeIn 0.3s ease-out; }
+
+  .n-produk { font-size: 20px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .h-produk { font-size: 32px; font-weight: 800; color: var(--accent-price); margin-bottom: 12px; letter-spacing: -0.5px; }
+  .h-produk span.rm { font-size: 16px; font-weight: 600; margin-right: 4px; vertical-align: top; position: relative; top: 6px; }
+  .d-produk { color: var(--text-muted); font-size: 14.5px; line-height: 1.6; margin-bottom: 24px; }
+
+  /* --- INSTALLATION GUIDE BOX --- */
+  .install-box {
+    display: none; background-color: var(--guide-bg);
+    border: 1px solid var(--guide-border); padding: 16px;
+    border-radius: 12px; margin-bottom: 24px;
+  }
+  body.dark-mode .install-box h4 { color: #93c5fd; }
+  .install-box h4 { margin: 0 0 10px 0; font-size: 14px; color: #1e3a8a; display: flex; align-items: center; gap: 6px; }
+  body.dark-mode .install-box ul { color: #e2e8f0; }
+  .install-box ul { margin: 0; padding-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.6; }
+  .install-box li { margin-bottom: 6px; }
+
+  /* --- BUTTON STYLES --- */
+  .btn-group { display: flex; flex-direction: column; gap: 12px; }
+  
+  .btn-buy {
+    width: 100%; border: none; padding: 16px; border-radius: 14px; text-decoration: none;
+    font-size: 15.5px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s ease; font-family: inherit;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+  }
+  .btn-buy:active { transform: scale(0.98); }
+  
+  .btn-wa { background: var(--primary-btn); color: #ffffff; }
+  .btn-wa:hover { background: var(--primary-hover); }
+  
+  .btn-shopee { background: var(--shopee); color: #ffffff; display: none; }
+  .btn-shopee:hover { background: var(--shopee-hover); }
+
+  .btn-download { background: var(--download); color: #ffffff; display: none; }
+  .btn-download:hover { background: var(--download-hover); }
+
+  .status { font-size: 13px; color: #ef4444; margin-top: 8px; text-align: center; }
+
+  /* --- QR PAYMENT SECTION --- */
+  .qr-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px dashed var(--border-color);
+    text-align: center;
+  }
+  .qr-section h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0 0 12px 0;
+  }
+  .qr-card {
+    background-color: var(--qr-bg);
+    border: 1px solid var(--qr-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: inline-block;
+    width: 100%;
+  }
+  .qr-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+  }
+  .qr-instructions {
+    text-align: left;
+    font-size: 13.5px;
+    color: var(--qr-text);
+    line-height: 1.6;
+    margin: 0;
+    padding-left: 20px;
+  }
+  .qr-instructions li { margin-bottom: 6px; }
+
+  /* --- FLOATING WHATSAPP BUTTON --- */
+  .floating-wa {
+    position: fixed; bottom: 24px; right: 24px; background-color: var(--whatsapp);
+    color: white; padding: 14px 24px; border-radius: 50px; font-size: 15px;
+    font-weight: 700; text-decoration: none; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease; z-index: 1000;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .floating-wa:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4); }
+</style>
+</head>
+<body>
+
+<div class="main-wrapper">
+  
+  <!-- BUTANG TUKAR TEMA -->
+  <button id="theme-toggle" class="theme-toggle" onclick="tukarTema()" title="Tukar Mod Gelap/Cerah">🌙</button>
+
+  <div class="header">
+    <h1>Stor AR</h1>
+    <p>Katalog Perkhidmatan & Produk</p>
+  </div>
+
+  <div class="tab-menu">
+    <button id="btn-iptv" class="tab-btn active" onclick="tukarTab('iptv')">📺 PAKEJ IPTV</button>
+    <button id="btn-3d" class="tab-btn" onclick="tukarTab('3d')">🧊 3D SERVICE</button>
+  </div>
+
+  <!-- KONTEN: PAKEJ IPTV -->
+  <div id="content-iptv" class="tab-content active">
+    <label class="field-label" for="drop-iptv">Pilih Langganan</label>
+    <select id="drop-iptv" class="modern-select" onchange="papar('iptv')">
+      <option value="">⏳ Memuat turun data...</option>
+    </select>
+    <div id="status-iptv" class="status"></div>
+
+    <div id="card-iptv" class="product-card">
+      <div class="n-produk">Nama</div>
+      <div class="h-produk"><span class="rm">RM</span>0.00</div>
+      <div class="d-produk">Penerangan</div>
+
+      <!-- KOTAK PANDUAN PEMASANGAN -->
+      <div id="install-guide" class="install-box">
+        <h4>📥 Panduan Pemasangan</h4>
+        <ul id="install-steps">
+          <!-- Langkah akan ditarik automatik dari Google Sheets -->
+        </ul>
+      </div>
+      
+      <div class="btn-group">
+        <a id="btn-download" href="#" target="_blank" class="btn-buy btn-download">⬇️ Muat Turun Aplikasi</a>
+        <button class="btn-buy btn-shopee" onclick="bukaShopee('iptv')">🛒 Beli di Shopee</button>
+        <button class="btn-buy btn-wa" onclick="beliSekarang('iptv')">Teruskan ke WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONTEN: 3D SERVICE -->
+  <div id="content-3d" class="tab-content">
+    <label class="field-label" for="drop-3d">Pilih Servis / Produk</label>
+    <select id="drop-3d" class="modern-select" onchange="papar('3d')">
+      <option value="">⏳ Memuat turun data...</option>
+    </select>
+    <div id="status-3d" class="status"></div>
+
+    <div id="card-3d" class="product-card">
+      <div class="n-produk">Nama</div>
+      <div class="h-produk"><span class="rm">RM</span>0.00</div>
+      <div class="d-produk">Penerangan</div>
+      
+      <div class="btn-group">
+        <button class="btn-buy btn-shopee" onclick="bukaShopee('3d')">🛒 Tempah di Shopee</button>
+        <button class="btn-buy btn-wa" onclick="beliSekarang('3d')">Tanya di WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEKSYEN PEMBAYARAN QR -->
+  <div class="qr-section">
+    <h3>💳 Cara Pembayaran</h3>
+    <div class="qr-card">
+      <img src="https://i.postimg.cc/xCvfgsHn/Whats-App-Image-2026-08-05-at-16-29-12.jpg" alt="QR Code Pembayaran DuitNow / TNG" class="qr-image">
+      
+      <ol class="qr-instructions">
+        <li><strong>Simpan (Save)</strong> atau tangkap skrin (screenshot) kod QR di atas.</li>
+        <li>Buka mana-mana aplikasi eWallet (Touch 'n Go, MAE) atau aplikasi Perbankan anda.</li>
+        <li>Pilih fungsi <strong>"Scan"</strong> dan imbas gambar kod QR tersebut dari galeri telefon.</li>
+        <li>Masukkan jumlah harga pakej/produk yang dipilih.</li>
+        <li>Hantar bukti pembayaran (resit) ke WhatsApp kami untuk pengesahan pantas.</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+
+<!-- BUTANG TERAPUNG WHATSAPP -->
+<a href="https://wa.me/601131586424?text=Hai%20Stor%20AR,%20saya%20ada%20pertanyaan." class="floating-wa" target="_blank">
+  💬 WhatsApp Kami
+</a>
+
+<script>
+  const nomborWhatsApp = "601131586424"; 
+  const linkSheetIPTV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShrhxgvrRE2J6InatA11dQmLlMczzcgbbasCol8jKqGPY2YGxhElenNuUDtnke0MXQETN6CD4pWtxQ/pub?output=csv";
+  const linkSheet3D = ""; 
+
+  let storIPTV = {};
+  let stor3D = {};
+  let produkSemasa = null; 
+  let tabSemasa = 'iptv';
+
+  document.addEventListener("DOMContentLoaded", () => {
+    semakTemaMasaLepas();
+    muatTurunData(linkSheetIPTV, "drop-iptv", storIPTV, "status-iptv");
+    if (linkSheet3D !== "") { muatTurunData(linkSheet3D, "drop-3d", stor3D, "status-3d"); } 
+    else { muatDataContoh3D(); }
+  });
+
+  // FUNGSI TUKAR TEMA DAY/NIGHT
+  function tukarTema() {
+    const body = document.body;
+    const isDark = body.classList.toggle("dark-mode");
+    const btnTheme = document.getElementById("theme-toggle");
+    
+    if (isDark) {
+      btnTheme.textContent = "☀️";
+      localStorage.setItem("stor-ar-theme", "dark");
+    } else {
+      btnTheme.textContent = "🌙";
+      localStorage.setItem("stor-ar-theme", "light");
+    }
+  }
+
+  function semakTemaMasaLepas() {
+    const savedTheme = localStorage.getItem("stor-ar-theme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      document.getElementById("theme-toggle").textContent = "☀️";
+    }
+  }
+
+  function muatTurunData(url, dropId, storObj, statusId) {
+    fetch(url, { cache: "no-store" })
+      .then(res => { if (!res.ok) throw new Error("Gagal akses"); return res.text(); })
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true, skipEmptyLines: true,
+          complete: function (results) { binaDropdown(results.data, dropId, storObj, statusId); }
+        });
+      })
+      .catch(err => { document.getElementById(dropId).innerHTML = '<option value="">-- Ralat memuat data --</option>'; });
+  }
+
+  function muatDataContoh3D() {
+    const dataContoh = [
+        { Kategori: "Perkhidmatan Cetakan", Nama: "3D Printing Service (Custom)", Harga: "0.50", Deskripsi: "Caj cetakan dikira berdasarkan berat (per gram).", Shopee: "https://my.shp.ee/Lc4rRkVm" },
+        { Kategori: "Filamen & Alat Ganti", Nama: "Filamen PLA (1kg) - Pelbagai Warna", Harga: "65.00", Deskripsi: "Filamen PLA berkualiti.", Shopee: "" }
+    ];
+    binaDropdown(dataContoh, "drop-3d", stor3D, "status-3d");
+  }
+
+  function formatHarga(mentah) {
+    if (!mentah) return "";
+    const bersih = String(mentah).replace(/[^0-9.]/g, "");
+    const nombor = parseFloat(bersih);
+    return isNaN(nombor) ? String(mentah).trim() : nombor.toFixed(2);
+  }
+
+  function binaDropdown(data, dropId, storObj, statusId) {
+    const dropdownEl = document.getElementById(dropId);
+    dropdownEl.innerHTML = '<option value="">-- Sila Pilih --</option>';
+    const kumpulan = new Map();
+    let adaData = false;
+
+    data.forEach((item, index) => {
+      const kategori = item["Kategori"] || item["kategori"] || "Lain-lain";
+      const nama = item["Nama"] || item["nama"];
+      const harga = item["Harga"] || item["harga"];
+      const deskripsi = item["Deskripsi"] || item["deskripsi"] || "";
+      const shopee = item["Shopee"] || item["shopee"] || ""; 
+      
+      const linkDownload = item["Link Download"] || item["link download"] || item["Link_Download"] || "";
+      const panduan = item["Panduan"] || item["panduan"] || "";
+
+      if (!nama || !harga) return;
+      adaData = true;
+
+      const id = "item_" + index;
+      storObj[id] = { 
+        Kategori: kategori, 
+        Nama: nama.trim(), 
+        Harga: formatHarga(harga), 
+        Deskripsi: deskripsi.trim(), 
+        Shopee: shopee.trim(),
+        LinkDownload: linkDownload.trim(),
+        Panduan: panduan.trim()
+      };
+
+      if (!kumpulan.has(kategori)) kumpulan.set(kategori, []);
+      kumpulan.get(kategori).push(id);
+    });
+
+    kumpulan.forEach((ids, kategori) => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = kategori;
+      ids.forEach(id => {
+        const option = document.createElement("option");
+        option.value = id; option.textContent = storObj[id].Nama;
+        optgroup.appendChild(option);
+      });
+      dropdownEl.appendChild(optgroup);
+    });
+  }
+
+  function tukarTab(tab) {
+    tabSemasa = tab;
+    document.getElementById('btn-iptv').classList.remove('active');
+    document.getElementById('btn-3d').classList.remove('active');
+    document.getElementById('btn-' + tab).classList.add('active');
+
+    document.getElementById('content-iptv').classList.remove('active');
+    document.getElementById('content-3d').classList.remove('active');
+    document.getElementById('content-' + tab).classList.add('active');
+
+    produkSemasa = null;
+    document.getElementById('drop-iptv').value = "";
+    document.getElementById('drop-3d').value = "";
+    document.getElementById('card-iptv').classList.remove('show');
+    document.getElementById('card-3d').classList.remove('show');
+  }
+
+  function papar(tab) {
+    const dropId = tab === 'iptv' ? 'drop-iptv' : 'drop-3d';
+    const cardId = tab === 'iptv' ? 'card-iptv' : 'card-3d';
+    const stor = tab === 'iptv' ? storIPTV : stor3D;
+    const id = document.getElementById(dropId).value;
+    const card = document.getElementById(cardId);
+
+    if (id !== "" && stor[id]) {
+      produkSemasa = stor[id];
+      card.querySelector('.n-produk').textContent = produkSemasa.Nama;
+      card.querySelector('.h-produk').innerHTML = '<span class="rm">RM</span>' + produkSemasa.Harga;
+      card.querySelector('.d-produk').textContent = produkSemasa.Deskripsi || "Tiada butiran tambahan disertakan.";
+      
+      const btnShopee = card.querySelector('.btn-shopee');
+      if(produkSemasa.Shopee && produkSemasa.Shopee !== "") {
+        btnShopee.style.display = "flex";
+      } else {
+        btnShopee.style.display = "none";
+      }
+
+      if (tab === 'iptv') {
+        const installBox = document.getElementById('install-guide');
+        const installSteps = document.getElementById('install-steps');
+        const btnDownload = document.getElementById('btn-download');
+        
+        if (produkSemasa.Panduan !== "" || produkSemasa.LinkDownload !== "") {
+            
+            if (produkSemasa.Panduan !== "") {
+                let stepsHTML = produkSemasa.Panduan.split('\n')
+                                .filter(step => step.trim() !== '')
+                                .map(step => `<li>${step.trim()}</li>`)
+                                .join('');
+                installSteps.innerHTML = stepsHTML;
+                installBox.style.display = "block";
+            } else {
+                installBox.style.display = "none";
+            }
+
+            if (produkSemasa.LinkDownload !== "") {
+                btnDownload.href = produkSemasa.LinkDownload;
+                btnDownload.style.display = "flex";
+            } else {
+                btnDownload.style.display = "none";
+            }
+            
+        } else {
+            installBox.style.display = "none";
+            btnDownload.style.display = "none";
+        }
+      }
+
+      card.classList.add('show');
+    } else {
+      produkSemasa = null;
+      card.classList.remove('show');
+    }
+  }
+
+  function bukaShopee(tab) {
+    if (produkSemasa && produkSemasa.Shopee) { window.open(produkSemasa.Shopee, '_blank'); }
+  }
+
+  function beliSekarang(tab) {
+    if (!produkSemasa) return;
+    const prefix = tab === 'iptv' ? 'melanggan Pakej IPTV' : 'servis/produk 3D';
+    const mesej = `Hai Stor AR, saya berminat untuk ${prefix}:\n\n📦 Item: ${produkSemasa.Nama}\n💰 Harga: RM ${produkSemasa.Harga}\n\nSaya telah membuat pembayaran dan akan lampirkan resit.`;
+    window.open(`https://wa.me/${nomborWhatsApp}?text=${encodeURIComponent(mesej)}`, '_blank');
+  }
+</script>
+
+</body>
+</html>
