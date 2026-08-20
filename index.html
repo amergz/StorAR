@@ -123,10 +123,10 @@
     border-radius: 16px; margin-bottom: 24px; border: 1px solid var(--border-color);
   }
   .tab-btn {
-    flex: 1; border: none; background: transparent; padding: 12px 10px;
-    border-radius: 12px; font-weight: 600; font-size: 13.5px;
+    flex: 1; border: none; background: transparent; padding: 12px 6px;
+    border-radius: 12px; font-weight: 600; font-size: 12.5px;
     color: var(--text-muted); cursor: pointer; transition: all 0.3s ease;
-    font-family: inherit;
+    font-family: inherit; white-space: nowrap;
   }
   .tab-btn.active {
     background: var(--card-bg); color: var(--text-main);
@@ -272,6 +272,75 @@
   }
   .installed-note.show { display: block; }
 
+  /* --- 3D PRODUK TERKINI (FEED) --- */
+  .feed-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .view-toggle-mini {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px;
+    border: 1.5px solid var(--border-color); background: var(--card-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; transition: all 0.2s ease;
+  }
+  .view-toggle-mini:hover { border-color: var(--text-muted); transform: scale(1.05); }
+  .view-toggle-mini:active { transform: scale(0.95); }
+
+  .product-feed { display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
+
+  .product-feed.grid-view {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+
+  .grid-item {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 14px; overflow: hidden; transition: border-color 0.2s ease;
+  }
+  .grid-item:hover { border-color: var(--text-muted); }
+  .grid-thumb-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; }
+  .grid-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grid-play-badge {
+    position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.65);
+    color: #fff; font-size: 10.5px; font-weight: 600; padding: 3px 7px; border-radius: 6px;
+  }
+  .grid-name {
+    padding: 9px 10px; font-size: 12.5px; font-weight: 700; color: var(--text-main);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .feed-item {
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 18px; overflow: hidden;
+  }
+
+  .feed-media {
+    width: 100%; aspect-ratio: 4 / 3; background: #000;
+    display: block; object-fit: cover;
+  }
+
+  .feed-video-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+  .feed-video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .feed-video-link {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; aspect-ratio: 16 / 9; background: #111827; color: #fff;
+    text-decoration: none; font-weight: 600; font-size: 14px;
+  }
+  .feed-video-link:hover { background: #1f2937; }
+
+  .feed-body { padding: 16px; }
+  .feed-name { font-size: 16.5px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+  .feed-note { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+
+  .feed-shopee-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; background: var(--shopee); color: #fff; border: none;
+    padding: 12px; border-radius: 12px; text-decoration: none;
+    font-weight: 700; font-size: 14px; transition: background 0.2s ease;
+  }
+  .feed-shopee-btn:hover { background: var(--shopee-hover); }
+
   /* --- APPS INSTALLER LIST --- */
   .app-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 
@@ -347,6 +416,7 @@
     <button id="btn-iptv" class="tab-btn active" onclick="tukarTab('iptv')">📺 IPTV</button>
     <button id="btn-apk" class="tab-btn" onclick="tukarTab('apk')">📥 APK</button>
     <button id="btn-3d" class="tab-btn" onclick="tukarTab('3d')">🧊 3D</button>
+    <button id="btn-3dproduk" class="tab-btn" onclick="tukarTab('3dproduk')">🆕 Produk</button>
   </div>
 
   <!-- KONTEN: PAKEJ IPTV -->
@@ -407,8 +477,23 @@
     </div>
   </div>
 
+  <!-- KONTEN: 3D PRODUK TERKINI -->
+  <div id="content-3dproduk" class="tab-content">
+    <div class="feed-header-row">
+      <label class="field-label" style="margin-bottom:0;">Produk 3D Terkini</label>
+      <button id="viewToggleBtn" class="view-toggle-mini" onclick="togglePaparanProduk()" title="Tukar paparan">
+        <span id="viewToggleIcon">🖼️</span>
+      </button>
+    </div>
+
+    <div id="status-3dproduk" class="status"></div>
+    <div id="product-feed" class="product-feed">
+      <div class="app-loading">⏳ Memuat turun produk terkini...</div>
+    </div>
+  </div>
+
   <!-- SEKSYEN PEMBAYARAN QR -->
-  <div class="qr-section">
+  <div id="qr-section" class="qr-section">
     <h3>💳 Cara Pembayaran</h3>
     <div class="qr-card">
       <img src="https://i.postimg.cc/xCvfgsHn/Whats-App-Image-2026-08-05-at-16-29-12.jpg" alt="QR Code Pembayaran DuitNow / TNG" class="qr-image">
@@ -435,6 +520,7 @@
   const linkSheetIPTV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShrhxgvrRE2J6InatA11dQmLlMczzcgbbasCol8jKqGPY2YGxhElenNuUDtnke0MXQETN6CD4pWtxQ/pub?output=csv";
   const linkSheet3D = ""; 
   const linkSheetAPK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRF1SyJc17xho0M7kQZpWPcliW97koMA1U7VZPNeG7G8txwEMO_pRf7IJqqVKtRn3x9Hp5pnLtLt-aR/pub?output=csv"; // <-- Tampal link "Publish to Web" (CSV) Google Sheets APK anda di sini
+  const linkSheet3DProduk = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTliGJHC3hAhtBfMqpIo0rBiy6hadGs8Vlov0JOtJVkVgEpU3Rtniy9opP64HmypKb2M4U1pUnlZ7Gv/pub?output=csv";
 
   let storIPTV = {};
   let stor3D = {};
@@ -449,6 +535,9 @@
 
     if (linkSheetAPK !== "") { muatTurunAPK(linkSheetAPK); }
     else { muatDataContohAPK(); }
+
+    if (linkSheet3DProduk !== "") { muatTurun3DProduk(linkSheet3DProduk); }
+    else { muatDataContoh3DProduk(); }
   });
 
   // FUNGSI TUKAR TEMA DAY/NIGHT
@@ -566,6 +655,148 @@
     }
   }
 
+  // ---------- 3D PRODUK TERKINI (feed video + gambar + Shopee) ----------
+
+  function muatTurun3DProduk(url) {
+    fetch(url, { cache: "no-store" })
+      .then(res => { if (!res.ok) throw new Error("Gagal akses"); return res.text(); })
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true, skipEmptyLines: true,
+          transformHeader: (h) => h.trim(),
+          complete: function (results) { renderProductFeed(results.data); }
+        });
+      })
+      .catch(err => {
+        document.getElementById("status-3dproduk").textContent = "Gagal memuat produk terkini. Semak link Google Sheets.";
+        document.getElementById("product-feed").innerHTML = "";
+      });
+  }
+
+  function muatDataContoh3DProduk() {
+    // Data contoh dipaparkan hanya jika linkSheet3DProduk belum diisi.
+    const dataContoh = [
+      { Nama: "Contoh Produk 3D Terbaru", Gambar: "", Video: "", Shopee: "", Nota: "Isi Google Sheet anda untuk papar produk sebenar." }
+    ];
+    renderProductFeed(dataContoh);
+  }
+
+  let produk3DList = [];
+  let paparanProduk = 'list';
+
+  function jenisMedia(link) {
+    if (!link) return "tiada";
+    const l = link.toLowerCase().split("?")[0];
+    if (l.endsWith(".mp4") || l.endsWith(".webm") || l.endsWith(".mov")) return "video-terus";
+    return "video-link";
+  }
+
+  function renderProductFeed(data) {
+    produk3DList = [];
+    let adaBarisTakLengkap = false;
+
+    data.forEach((item) => {
+      const nama = (item["Nama"] || item["nama"] || "").trim();
+      const gambar = (item["Gambar"] || item["gambar"] || item["Imej"] || item["imej"] || "").trim();
+      const video = (item["Video"] || item["video"] || "").trim();
+      const shopee = (item["Shopee"] || item["shopee"] || "").trim();
+      const nota = (item["Nota"] || item["nota"] || item["Deskripsi"] || item["deskripsi"] || "").trim();
+
+      if (!nama || (!gambar && !video)) {
+        if (nama) adaBarisTakLengkap = true;
+        return;
+      }
+      produk3DList.push({ nama, gambar, video, shopee, nota });
+    });
+
+    const statusEl = document.getElementById("status-3dproduk");
+    if (produk3DList.length === 0) {
+      statusEl.textContent = adaBarisTakLengkap
+        ? "Ada baris dalam Sheet tapi lajur Gambar dan Video kosong. Isi sekurang-kurangnya satu."
+        : "Tiada produk dijumpai. Semak lajur Nama/Gambar/Video/Shopee di Baris 1 Google Sheets.";
+    } else {
+      statusEl.textContent = "";
+    }
+
+    lukisProdukFeed();
+  }
+
+  function togglePaparanProduk() {
+    paparanProduk = (paparanProduk === 'list') ? 'grid' : 'list';
+
+    const icon = document.getElementById('viewToggleIcon');
+    const btn = document.getElementById('viewToggleBtn');
+    if (paparanProduk === 'list') {
+      icon.textContent = '🖼️';
+      btn.title = 'Tukar ke paparan Thumbnail';
+    } else {
+      icon.textContent = '📋';
+      btn.title = 'Tukar ke paparan Senarai';
+    }
+
+    lukisProdukFeed();
+  }
+
+  function lukisProdukFeed() {
+    const feedEl = document.getElementById("product-feed");
+    feedEl.classList.toggle('grid-view', paparanProduk === 'grid');
+    feedEl.innerHTML = "";
+
+    if (produk3DList.length === 0) return;
+
+    if (paparanProduk === 'grid') {
+      produk3DList.forEach((p) => {
+        const adaVideo = p.video && jenisMedia(p.video) !== "tiada";
+        const gambarPapar = p.gambar || (adaVideo ? '' : 'icon-192.png');
+        const link = p.shopee || p.video || p.gambar || '#';
+
+        const el = document.createElement("a");
+        el.className = "grid-item";
+        el.href = link;
+        el.target = "_blank";
+        el.rel = "noopener";
+        el.innerHTML = `
+          <div class="grid-thumb-wrap">
+            ${gambarPapar ? `<img class="grid-thumb" src="${gambarPapar}" alt="${p.nama}" loading="lazy">` : ""}
+            ${adaVideo ? `<span class="grid-play-badge">▶️ Video</span>` : ""}
+          </div>
+          <div class="grid-name">${p.nama}</div>
+        `;
+        feedEl.appendChild(el);
+      });
+      return;
+    }
+
+    // Mod senarai (list) - paparan penuh dengan media, nota dan butang Shopee
+    produk3DList.forEach((p) => {
+      let mediaHTML = "";
+      if (p.gambar) {
+        mediaHTML += `<img class="feed-media" src="${p.gambar}" alt="${p.nama}" loading="lazy">`;
+      }
+      if (p.video && jenisMedia(p.video) === "video-terus") {
+        mediaHTML += `
+          <div class="feed-video-wrap">
+            <video src="${p.video}" controls preload="metadata" playsinline></video>
+          </div>`;
+      } else if (p.video) {
+        mediaHTML += `
+          <a class="feed-video-link" href="${p.video}" target="_blank" rel="noopener">▶️ Tonton Video Preview</a>`;
+      }
+
+      const row = document.createElement("div");
+      row.className = "feed-item";
+      row.innerHTML = `
+        ${mediaHTML}
+        <div class="feed-body">
+          <div class="feed-name">${p.nama}</div>
+          ${p.nota ? `<div class="feed-note">${p.nota}</div>` : ""}
+          ${p.shopee ? `<a class="feed-shopee-btn" href="${p.shopee}" target="_blank" rel="noopener">🛒 Tempah di Shopee</a>` : ""}
+        </div>
+      `;
+      feedEl.appendChild(row);
+    });
+  }
+
   function formatHarga(mentah) {
     if (!mentah) return "";
     const bersih = String(mentah).replace(/[^0-9.]/g, "");
@@ -621,7 +852,7 @@
 
   function tukarTab(tab) {
     tabSemasa = tab;
-    const semuaTab = ['iptv', '3d', 'apk'];
+    const semuaTab = ['iptv', '3d', 'apk', '3dproduk'];
 
     semuaTab.forEach(t => {
       document.getElementById('btn-' + t).classList.toggle('active', t === tab);
@@ -633,6 +864,9 @@
     if (document.getElementById('drop-3d')) document.getElementById('drop-3d').value = "";
     if (document.getElementById('card-iptv')) document.getElementById('card-iptv').classList.remove('show');
     if (document.getElementById('card-3d')) document.getElementById('card-3d').classList.remove('show');
+
+    const qrSection = document.getElementById('qr-section');
+    if (qrSection) qrSection.style.display = (tab === '3dproduk') ? 'none' : '';
   }
 
   function papar(tab) {
