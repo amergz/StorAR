@@ -272,6 +272,44 @@
   }
   .installed-note.show { display: block; }
 
+  /* --- APPS INSTALLER LIST --- */
+  .app-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+
+  .app-loading {
+    text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 20px 0;
+  }
+
+  .app-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 14px 16px;
+    transition: border-color 0.2s ease;
+  }
+  .app-item:hover { border-color: var(--text-muted); }
+
+  .app-icon {
+    width: 52px; height: 52px; border-radius: 14px; object-fit: cover;
+    flex-shrink: 0; background: var(--card-bg); border: 1px solid var(--border-color);
+  }
+
+  .app-info { flex: 1; min-width: 0; }
+  .app-name {
+    font-size: 15.5px; font-weight: 700; color: var(--text-main);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .app-note {
+    font-size: 12.5px; color: var(--text-muted); margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .app-dl-btn {
+    flex-shrink: 0; background: var(--tab-bg); border: 1.5px solid var(--border-color);
+    color: var(--accent-price); font-weight: 700; font-size: 13.5px;
+    padding: 10px 18px; border-radius: 12px; text-decoration: none;
+    cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+  }
+  .app-dl-btn:hover { background: var(--accent-price); color: #ffffff; border-color: var(--accent-price); }
+
   /* --- FLOATING WHATSAPP BUTTON --- */
   .floating-wa {
     position: fixed; bottom: 24px; right: 24px; background-color: var(--whatsapp);
@@ -306,8 +344,9 @@
   <div id="installedNote" class="installed-note">✓ App telah dipasang pada peranti anda.</div>
 
   <div class="tab-menu">
-    <button id="btn-iptv" class="tab-btn active" onclick="tukarTab('iptv')">📺 PAKEJ IPTV</button>
-    <button id="btn-3d" class="tab-btn" onclick="tukarTab('3d')">🧊 3D SERVICE</button>
+    <button id="btn-iptv" class="tab-btn active" onclick="tukarTab('iptv')">📺 IPTV</button>
+    <button id="btn-3d" class="tab-btn" onclick="tukarTab('3d')">🧊 3D</button>
+    <button id="btn-apk" class="tab-btn" onclick="tukarTab('apk')">📥 APK</button>
   </div>
 
   <!-- KONTEN: PAKEJ IPTV -->
@@ -359,6 +398,15 @@
     </div>
   </div>
 
+  <!-- KONTEN: APPS INSTALLER -->
+  <div id="content-apk" class="tab-content">
+    <label class="field-label">Download APK / Apps Installer</label>
+    <div id="status-apk" class="status"></div>
+    <div id="app-list" class="app-list">
+      <div class="app-loading">⏳ Memuat turun senarai apps...</div>
+    </div>
+  </div>
+
   <!-- SEKSYEN PEMBAYARAN QR -->
   <div class="qr-section">
     <h3>💳 Cara Pembayaran</h3>
@@ -386,6 +434,7 @@
   const nomborWhatsApp = "601131586424"; 
   const linkSheetIPTV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShrhxgvrRE2J6InatA11dQmLlMczzcgbbasCol8jKqGPY2YGxhElenNuUDtnke0MXQETN6CD4pWtxQ/pub?output=csv";
   const linkSheet3D = ""; 
+  const linkSheetAPK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRF1SyJc17xho0M7kQZpWPcliW97koMA1U7VZPNeG7G8txwEMO_pRf7IJqqVKtRn3x9Hp5pnLtLt-aR/pub?output=csv"; // <-- Tampal link "Publish to Web" (CSV) Google Sheets APK anda di sini
 
   let storIPTV = {};
   let stor3D = {};
@@ -397,6 +446,9 @@
     muatTurunData(linkSheetIPTV, "drop-iptv", storIPTV, "status-iptv");
     if (linkSheet3D !== "") { muatTurunData(linkSheet3D, "drop-3d", stor3D, "status-3d"); } 
     else { muatDataContoh3D(); }
+
+    if (linkSheetAPK !== "") { muatTurunAPK(linkSheetAPK); }
+    else { muatDataContohAPK(); }
   });
 
   // FUNGSI TUKAR TEMA DAY/NIGHT
@@ -440,6 +492,70 @@
         { Kategori: "Filamen & Alat Ganti", Nama: "Filamen PLA (1kg) - Pelbagai Warna", Harga: "65.00", Deskripsi: "Filamen PLA berkualiti.", Shopee: "" }
     ];
     binaDropdown(dataContoh, "drop-3d", stor3D, "status-3d");
+  }
+
+  // ---------- APPS INSTALLER (senarai APK) ----------
+
+  function muatTurunAPK(url) {
+    fetch(url, { cache: "no-store" })
+      .then(res => { if (!res.ok) throw new Error("Gagal akses"); return res.text(); })
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true, skipEmptyLines: true,
+          complete: function (results) { renderAppList(results.data); }
+        });
+      })
+      .catch(err => {
+        document.getElementById("status-apk").textContent = "Gagal memuat senarai apps. Semak link Google Sheets.";
+        document.getElementById("app-list").innerHTML = "";
+      });
+  }
+
+  function muatDataContohAPK() {
+    // Data contoh dipaparkan hanya jika linkSheetAPK belum diisi.
+    // Ganti terus dengan Google Sheet anda sendiri - lihat BACA-DULU.md
+    const dataContoh = [
+      { Nama: "SyborgTV APK", Icon: "https://i.postimg.cc/placeholder1.png", Link: "" },
+      { Nama: "Myiptv4k APK", Icon: "https://i.postimg.cc/placeholder2.png", Link: "" }
+    ];
+    renderAppList(dataContoh);
+  }
+
+  function renderAppList(data) {
+    const listEl = document.getElementById("app-list");
+    const statusEl = document.getElementById("status-apk");
+    listEl.innerHTML = "";
+
+    let adaData = false;
+    data.forEach((item) => {
+      const nama = (item["Nama"] || item["nama"] || "").trim();
+      const icon = (item["Icon"] || item["icon"] || item["Ikon"] || item["ikon"] || "").trim();
+      const link = (item["Link"] || item["link"] || item["Link Download"] || item["link download"] || "").trim();
+      const nota = (item["Nota"] || item["nota"] || "").trim();
+
+      if (!nama || !link) return;
+      adaData = true;
+
+      const row = document.createElement("div");
+      row.className = "app-item";
+      row.innerHTML = `
+        <img class="app-icon" src="${icon || 'icon-192.png'}" alt="${nama}" loading="lazy"
+             onerror="this.src='icon-192.png'">
+        <div class="app-info">
+          <div class="app-name">${nama}</div>
+          ${nota ? `<div class="app-note">${nota}</div>` : ""}
+        </div>
+        <a class="app-dl-btn" href="${link}" target="_blank" rel="noopener">Download</a>
+      `;
+      listEl.appendChild(row);
+    });
+
+    if (!adaData) {
+      listEl.innerHTML = "";
+      statusEl.textContent = "Tiada apps dijumpai. Semak lajur Nama/Icon/Link di Baris 1 Google Sheets.";
+    } else {
+      statusEl.textContent = "";
+    }
   }
 
   function formatHarga(mentah) {
@@ -497,19 +613,18 @@
 
   function tukarTab(tab) {
     tabSemasa = tab;
-    document.getElementById('btn-iptv').classList.remove('active');
-    document.getElementById('btn-3d').classList.remove('active');
-    document.getElementById('btn-' + tab).classList.add('active');
+    const semuaTab = ['iptv', '3d', 'apk'];
 
-    document.getElementById('content-iptv').classList.remove('active');
-    document.getElementById('content-3d').classList.remove('active');
-    document.getElementById('content-' + tab).classList.add('active');
+    semuaTab.forEach(t => {
+      document.getElementById('btn-' + t).classList.toggle('active', t === tab);
+      document.getElementById('content-' + t).classList.toggle('active', t === tab);
+    });
 
     produkSemasa = null;
-    document.getElementById('drop-iptv').value = "";
-    document.getElementById('drop-3d').value = "";
-    document.getElementById('card-iptv').classList.remove('show');
-    document.getElementById('card-3d').classList.remove('show');
+    if (document.getElementById('drop-iptv')) document.getElementById('drop-iptv').value = "";
+    if (document.getElementById('drop-3d')) document.getElementById('drop-3d').value = "";
+    if (document.getElementById('card-iptv')) document.getElementById('card-iptv').classList.remove('show');
+    if (document.getElementById('card-3d')) document.getElementById('card-3d').classList.remove('show');
   }
 
   function papar(tab) {
