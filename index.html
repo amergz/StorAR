@@ -2,8 +2,18 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Stor AR - Katalog Rasmi</title>
+
+<!-- PWA: manifest, tema warna, ikon -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Stor AR - Katalog Perkhidmatan & Produk">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stor AR">
 
 <!-- Menggunakan Font Moden -->
 <style>
@@ -236,6 +246,32 @@
   }
   .qr-instructions li { margin-bottom: 6px; }
 
+  /* --- PWA INSTALL BANNER --- */
+  .install-banner {
+    display: none; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 20px;
+  }
+  .install-banner.show { display: flex; animation: fadeIn 0.3s ease-out; }
+  .install-text { font-size: 13px; line-height: 1.4; color: var(--text-main); }
+  .install-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .install-btn {
+    flex-shrink: 0; background: var(--primary-btn); color: #fff; border: none;
+    padding: 9px 14px; font-size: 13px; font-weight: 700; border-radius: 10px;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .install-btn:hover { background: var(--primary-hover); }
+  .install-dismiss {
+    background: none; border: none; color: var(--text-muted); font-size: 18px;
+    cursor: pointer; padding: 0 2px; line-height: 1;
+  }
+  .installed-note {
+    display: none; font-size: 12px; color: var(--accent-price);
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 10px; padding: 8px 12px; margin-bottom: 20px; text-align: center;
+  }
+  .installed-note.show { display: block; }
+
   /* --- FLOATING WHATSAPP BUTTON --- */
   .floating-wa {
     position: fixed; bottom: 24px; right: 24px; background-color: var(--whatsapp);
@@ -258,6 +294,16 @@
     <h1>Stor AR</h1>
     <p>Katalog Perkhidmatan & Produk</p>
   </div>
+
+  <div id="installBanner" class="install-banner">
+    <div class="install-text">
+      <strong>Pasang app ini</strong>
+      Buka terus dari skrin utama tanpa perlu taip alamat website.
+    </div>
+    <button id="installBtn" class="install-btn">Pasang</button>
+    <button id="dismissBtn" class="install-dismiss" aria-label="Tutup">✕</button>
+  </div>
+  <div id="installedNote" class="installed-note">✓ App telah dipasang pada peranti anda.</div>
 
   <div class="tab-menu">
     <button id="btn-iptv" class="tab-btn active" onclick="tukarTab('iptv')">📺 PAKEJ IPTV</button>
@@ -533,6 +579,57 @@
     const prefix = tab === 'iptv' ? 'melanggan Pakej IPTV' : 'servis/produk 3D';
     const mesej = `Hai Stor AR, saya berminat untuk ${prefix}:\n\n📦 Item: ${produkSemasa.Nama}\n💰 Harga: RM ${produkSemasa.Harga}\n\nSaya telah membuat pembayaran dan akan lampirkan resit.`;
     window.open(`https://wa.me/${nomborWhatsApp}?text=${encodeURIComponent(mesej)}`, '_blank');
+  }
+
+  /* ---------- PWA: service worker + jemputan pasang ---------- */
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(err => {
+        console.warn("Pendaftaran service worker gagal:", err);
+      });
+    });
+  }
+
+  const installBanner = document.getElementById("installBanner");
+  const installedNote = document.getElementById("installedNote");
+  let deferredPrompt = null;
+
+  function appSudahDipasang() {
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.navigator.standalone === true;
+  }
+
+  if (appSudahDipasang()) {
+    installedNote.classList.add("show");
+  } else {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!sessionStorage.getItem("installDismissed")) {
+        installBanner.classList.add("show");
+      }
+    });
+
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        installBanner.classList.remove("show");
+      }
+      deferredPrompt = null;
+    });
+
+    document.getElementById("dismissBtn").addEventListener("click", () => {
+      installBanner.classList.remove("show");
+      sessionStorage.setItem("installDismissed", "1");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installBanner.classList.remove("show");
+      installedNote.classList.add("show");
+    });
   }
 </script>
 
