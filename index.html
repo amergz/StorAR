@@ -480,6 +480,7 @@
       .then(csvText => {
         Papa.parse(csvText, {
           header: true, skipEmptyLines: true,
+          transformHeader: (h) => h.trim(),
           complete: function (results) { binaDropdown(results.data, dropId, storObj, statusId); }
         });
       })
@@ -502,6 +503,7 @@
       .then(csvText => {
         Papa.parse(csvText, {
           header: true, skipEmptyLines: true,
+          transformHeader: (h) => h.trim(),
           complete: function (results) { renderAppList(results.data); }
         });
       })
@@ -527,13 +529,17 @@
     listEl.innerHTML = "";
 
     let adaData = false;
+    let adaBarisTakLengkap = false;
     data.forEach((item) => {
       const nama = (item["Nama"] || item["nama"] || "").trim();
       const icon = (item["Icon"] || item["icon"] || item["Ikon"] || item["ikon"] || "").trim();
       const link = (item["Link"] || item["link"] || item["Link Download"] || item["link download"] || "").trim();
       const nota = (item["Nota"] || item["nota"] || "").trim();
 
-      if (!nama || !link) return;
+      if (!nama || !link) {
+        if (nama || link) adaBarisTakLengkap = true;
+        return;
+      }
       adaData = true;
 
       const row = document.createElement("div");
@@ -552,7 +558,9 @@
 
     if (!adaData) {
       listEl.innerHTML = "";
-      statusEl.textContent = "Tiada apps dijumpai. Semak lajur Nama/Icon/Link di Baris 1 Google Sheets.";
+      statusEl.textContent = adaBarisTakLengkap
+        ? "Ada baris dalam Sheet tapi lajur Nama atau Link masih kosong. Isi kedua-dua lajur tu untuk app dipaparkan."
+        : "Tiada apps dijumpai. Semak lajur Nama/Icon/Link di Baris 1 Google Sheets.";
     } else {
       statusEl.textContent = "";
     }
