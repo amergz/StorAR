@@ -272,42 +272,67 @@
   }
   .installed-note.show { display: block; }
 
-  /* --- 3D PRODUK TERKINI (FEED) --- */
-  .feed-header-row {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .view-toggle-mini {
-    flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px;
-    border: 1.5px solid var(--border-color); background: var(--card-bg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; cursor: pointer; transition: all 0.2s ease;
-  }
-  .view-toggle-mini:hover { border-color: var(--text-muted); transform: scale(1.05); }
-  .view-toggle-mini:active { transform: scale(0.95); }
-
-  .product-feed { display: flex; flex-direction: column; gap: 18px; margin-top: 4px; }
-
+  /* --- 3D PRODUK TERKINI (FEED - THUMBNAIL GRID SAHAJA) --- */
   .product-feed.grid-view {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;
   }
 
   .grid-item {
-    display: block; text-decoration: none; color: inherit;
     background: var(--tab-bg); border: 1px solid var(--border-color);
-    border-radius: 14px; overflow: hidden; transition: border-color 0.2s ease;
+    border-radius: 14px; overflow: hidden;
   }
-  .grid-item:hover { border-color: var(--text-muted); }
-  .grid-thumb-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; }
-  .grid-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .grid-thumb-wrap {
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    background: #000; overflow: hidden; touch-action: pan-y;
+  }
+
+  .grid-slider {
+    display: flex; width: 100%; height: 100%;
+    transition: transform 0.25s ease;
+  }
+  .grid-slide-img {
+    width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; display: block;
+  }
+
+  .grid-nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.45); color: #fff; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0; line-height: 1;
+  }
+  .grid-nav-prev { left: 6px; }
+  .grid-nav-next { right: 6px; }
+  .grid-nav-btn:hover { background: rgba(0,0,0,0.7); }
+
+  .grid-dots {
+    position: absolute; bottom: 6px; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 4px;
+  }
+  .grid-dots .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+  }
+  .grid-dots .dot.active { background: #fff; }
+
   .grid-play-badge {
-    position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.65);
+    position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.65);
     color: #fff; font-size: 10.5px; font-weight: 600; padding: 3px 7px; border-radius: 6px;
+    cursor: pointer; text-decoration: none;
   }
+
   .grid-name {
-    padding: 9px 10px; font-size: 12.5px; font-weight: 700; color: var(--text-main);
+    padding: 9px 10px 4px; font-size: 12.5px; font-weight: 700; color: var(--text-main);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+
+  .grid-shopee-mini {
+    display: block; margin: 6px 10px 10px; text-align: center;
+    background: var(--shopee); color: #fff; font-size: 11.5px; font-weight: 700;
+    padding: 7px; border-radius: 8px; text-decoration: none;
+  }
+  .grid-shopee-mini:hover { background: var(--shopee-hover); }
 
   .feed-item {
     background: var(--tab-bg); border: 1px solid var(--border-color);
@@ -479,15 +504,10 @@
 
   <!-- KONTEN: 3D PRODUK TERKINI -->
   <div id="content-3dproduk" class="tab-content">
-    <div class="feed-header-row">
-      <label class="field-label" style="margin-bottom:0;">Produk 3D Terkini</label>
-      <button id="viewToggleBtn" class="view-toggle-mini" onclick="togglePaparanProduk()" title="Tukar paparan">
-        <span id="viewToggleIcon">🖼️</span>
-      </button>
-    </div>
+    <label class="field-label">Produk 3D Terkini</label>
 
     <div id="status-3dproduk" class="status"></div>
-    <div id="product-feed" class="product-feed">
+    <div id="product-feed" class="product-feed grid-view">
       <div class="app-loading">⏳ Memuat turun produk terkini...</div>
     </div>
   </div>
@@ -682,7 +702,6 @@
   }
 
   let produk3DList = [];
-  let paparanProduk = 'list';
 
   function jenisMedia(link) {
     if (!link) return "tiada";
@@ -697,16 +716,20 @@
 
     data.forEach((item) => {
       const nama = (item["Nama"] || item["nama"] || "").trim();
-      const gambar = (item["Gambar"] || item["gambar"] || item["Imej"] || item["imej"] || "").trim();
+      const gambarRaw = (item["Gambar"] || item["gambar"] || item["Imej"] || item["imej"] || "").trim();
       const video = (item["Video"] || item["video"] || "").trim();
       const shopee = (item["Shopee"] || item["shopee"] || "").trim();
       const nota = (item["Nota"] || item["nota"] || item["Deskripsi"] || item["deskripsi"] || "").trim();
 
-      if (!nama || (!gambar && !video)) {
+      // Sokong lebih dari 1 gambar - pisahkan dengan koma dalam satu sel Google Sheets.
+      // Cth dalam lajur Gambar: link1.png, link2.png, link3.png
+      const gambarList = gambarRaw.split(",").map(g => g.trim()).filter(Boolean);
+
+      if (!nama || (gambarList.length === 0 && !video)) {
         if (nama) adaBarisTakLengkap = true;
         return;
       }
-      produk3DList.push({ nama, gambar, video, shopee, nota });
+      produk3DList.push({ nama, gambarList, video, shopee, nota });
     });
 
     const statusEl = document.getElementById("status-3dproduk");
@@ -721,80 +744,66 @@
     lukisProdukFeed();
   }
 
-  function togglePaparanProduk() {
-    paparanProduk = (paparanProduk === 'list') ? 'grid' : 'list';
-
-    const icon = document.getElementById('viewToggleIcon');
-    const btn = document.getElementById('viewToggleBtn');
-    if (paparanProduk === 'list') {
-      icon.textContent = '🖼️';
-      btn.title = 'Tukar ke paparan Thumbnail';
-    } else {
-      icon.textContent = '📋';
-      btn.title = 'Tukar ke paparan Senarai';
-    }
-
-    lukisProdukFeed();
-  }
-
   function lukisProdukFeed() {
     const feedEl = document.getElementById("product-feed");
-    feedEl.classList.toggle('grid-view', paparanProduk === 'grid');
     feedEl.innerHTML = "";
-
     if (produk3DList.length === 0) return;
 
-    if (paparanProduk === 'grid') {
-      produk3DList.forEach((p) => {
-        const adaVideo = p.video && jenisMedia(p.video) !== "tiada";
-        const gambarPapar = p.gambar || (adaVideo ? '' : 'icon-192.png');
-        const link = p.shopee || p.video || p.gambar || '#';
-
-        const el = document.createElement("a");
-        el.className = "grid-item";
-        el.href = link;
-        el.target = "_blank";
-        el.rel = "noopener";
-        el.innerHTML = `
-          <div class="grid-thumb-wrap">
-            ${gambarPapar ? `<img class="grid-thumb" src="${gambarPapar}" alt="${p.nama}" loading="lazy">` : ""}
-            ${adaVideo ? `<span class="grid-play-badge">▶️ Video</span>` : ""}
-          </div>
-          <div class="grid-name">${p.nama}</div>
-        `;
-        feedEl.appendChild(el);
-      });
-      return;
-    }
-
-    // Mod senarai (list) - paparan penuh dengan media, nota dan butang Shopee
     produk3DList.forEach((p) => {
-      let mediaHTML = "";
-      if (p.gambar) {
-        mediaHTML += `<img class="feed-media" src="${p.gambar}" alt="${p.nama}" loading="lazy">`;
-      }
-      if (p.video && jenisMedia(p.video) === "video-terus") {
-        mediaHTML += `
-          <div class="feed-video-wrap">
-            <video src="${p.video}" controls preload="metadata" playsinline></video>
-          </div>`;
-      } else if (p.video) {
-        mediaHTML += `
-          <a class="feed-video-link" href="${p.video}" target="_blank" rel="noopener">▶️ Tonton Video Preview</a>`;
-      }
+      const adaVideo = p.video && jenisMedia(p.video) !== "tiada";
+      const gambarList = p.gambarList.length > 0 ? p.gambarList : ["icon-192.png"];
+      const banyakGambar = gambarList.length > 1;
 
-      const row = document.createElement("div");
-      row.className = "feed-item";
-      row.innerHTML = `
-        ${mediaHTML}
-        <div class="feed-body">
-          <div class="feed-name">${p.nama}</div>
-          ${p.nota ? `<div class="feed-note">${p.nota}</div>` : ""}
-          ${p.shopee ? `<a class="feed-shopee-btn" href="${p.shopee}" target="_blank" rel="noopener">🛒 Tempah di Shopee</a>` : ""}
+      const slidesHTML = gambarList.map(g =>
+        `<img class="grid-slide-img" src="${g}" alt="${p.nama}" loading="lazy">`
+      ).join("");
+
+      const dotsHTML = banyakGambar
+        ? `<div class="grid-dots">${gambarList.map((_, i) => `<span class="dot${i === 0 ? ' active' : ''}"></span>`).join("")}</div>`
+        : "";
+
+      const navHTML = banyakGambar
+        ? `<button class="grid-nav-btn grid-nav-prev" onclick="event.stopPropagation(); geserThumbnail(this,-1)">‹</button>
+           <button class="grid-nav-btn grid-nav-next" onclick="event.stopPropagation(); geserThumbnail(this,1)">›</button>`
+        : "";
+
+      const el = document.createElement("div");
+      el.className = "grid-item";
+      el.innerHTML = `
+        <div class="grid-thumb-wrap" data-index="0" data-total="${gambarList.length}">
+          <div class="grid-slider">${slidesHTML}</div>
+          ${navHTML}
+          ${dotsHTML}
+          ${adaVideo ? `<a class="grid-play-badge" href="${p.video}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️ Video</a>` : ""}
         </div>
+        <div class="grid-name">${p.nama}</div>
+        ${p.shopee ? `<a class="grid-shopee-mini" href="${p.shopee}" target="_blank" rel="noopener">🛒 Shopee</a>` : ""}
       `;
-      feedEl.appendChild(row);
+      feedEl.appendChild(el);
+
+      if (banyakGambar) {
+        aktifkanSwipe(el.querySelector(".grid-thumb-wrap"));
+      }
     });
+  }
+
+  function geserThumbnail(triggerEl, arah) {
+    const wrap = triggerEl.closest(".grid-thumb-wrap");
+    const total = parseInt(wrap.dataset.total, 10);
+    let idx = parseInt(wrap.dataset.index, 10);
+    idx = (idx + arah + total) % total;
+    wrap.dataset.index = idx;
+    wrap.querySelector(".grid-slider").style.transform = `translateX(${-idx * 100}%)`;
+    wrap.querySelectorAll(".dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+  }
+
+  function aktifkanSwipe(wrapEl) {
+    let startX = 0;
+    wrapEl.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    wrapEl.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 30) geserThumbnail(wrapEl, dx < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   function formatHarga(mentah) {
