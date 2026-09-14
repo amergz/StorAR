@@ -490,8 +490,8 @@
   <div id="news-section" class="news-section">
     <div class="news-wrap" id="news-wrap">
       <div class="news-track" id="news-track"></div>
-      <button class="news-nav-btn news-nav-prev" onclick="gerakNewsManual(-1)" aria-label="Sebelum">‹</button>
-      <button class="news-nav-btn news-nav-next" onclick="gerakNewsManual(1)" aria-label="Seterusnya">›</button>
+      <button class="news-nav-btn news-nav-prev" onclick="event.stopPropagation(); gerakNewsManual(-1)" aria-label="Sebelum">‹</button>
+      <button class="news-nav-btn news-nav-next" onclick="event.stopPropagation(); gerakNewsManual(1)" aria-label="Seterusnya">›</button>
     </div>
     <div class="news-dots" id="news-dots"></div>
   </div>
@@ -620,6 +620,7 @@
   let newsList = [];
   let newsIndex = 0;
   let newsTimer = null;
+  let newsTouched = false;
 
   document.addEventListener("DOMContentLoaded", () => {
     semakTemaMasaLepas();
@@ -784,13 +785,32 @@
     }
   }
 
+  function hentikanAutoplayNews() {
+    if (newsTimer) { clearInterval(newsTimer); newsTimer = null; }
+  }
+
   function aktifkanSwipeNews(wrapEl) {
     let startX = 0;
+
     wrapEl.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+
     wrapEl.addEventListener("touchend", (e) => {
       const dx = e.changedTouches[0].clientX - startX;
-      if (Math.abs(dx) > 30) gerakNewsManual(dx < 0 ? 1 : -1);
+      newsTouched = true;
+      setTimeout(() => { newsTouched = false; }, 400); // elak "click" sintetik lepas touch double-handle
+
+      if (Math.abs(dx) > 30) {
+        gerakNewsManual(dx < 0 ? 1 : -1); // swipe = tukar news & auto-gerak sambung semula
+      } else {
+        hentikanAutoplayNews(); // sekadar tekan (tap) = berhenti auto-gerak supaya sempat baca
+      }
     }, { passive: true });
+
+    // Untuk desktop (klik tetikus, bukan touch)
+    wrapEl.addEventListener("click", () => {
+      if (newsTouched) return;
+      hentikanAutoplayNews();
+    });
   }
 
   // ---------- APPS INSTALLER (senarai APK) ----------
