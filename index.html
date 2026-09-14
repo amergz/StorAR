@@ -117,6 +117,65 @@
   .header h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.5px; }
   .header p { color: var(--text-muted); font-size: 14.5px; margin: 0; }
 
+  /* --- NEWS / UPDATE TERKINI (CAROUSEL) --- */
+  .news-section { display: none; margin: -14px 0 22px; }
+
+  .news-wrap {
+    position: relative; overflow: hidden; border-radius: 16px;
+  }
+
+  .news-track {
+    display: flex; transition: transform 0.5s ease;
+  }
+
+  .news-card {
+    flex: 0 0 100%; width: 100%; box-sizing: border-box;
+    background: var(--tab-bg); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 13px 38px; display: flex;
+    align-items: center; gap: 10px; text-decoration: none; color: inherit;
+    cursor: default;
+  }
+  a.news-card { cursor: pointer; }
+  a.news-card:hover { border-color: var(--text-muted); }
+
+  .news-icon {
+    font-size: 19px; flex-shrink: 0;
+    animation: newsBounce 2.2s ease-in-out infinite;
+  }
+  @keyframes newsBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .news-body { min-width: 0; flex: 1; }
+  .news-title {
+    font-size: 13.5px; font-weight: 700; color: var(--text-main);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .news-desc {
+    font-size: 12px; color: var(--text-muted); margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .news-date { font-size: 10.5px; color: var(--text-muted); margin-top: 3px; }
+
+  .news-nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.35); color: #fff; font-size: 13px;
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0; line-height: 1; z-index: 2;
+  }
+  .news-nav-prev { left: 5px; }
+  .news-nav-next { right: 5px; }
+  .news-nav-btn:hover { background: rgba(0,0,0,0.6); }
+
+  .news-dots { display: flex; justify-content: center; gap: 5px; margin-top: 9px; }
+  .news-dots .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--border-color);
+    transition: background 0.2s ease, width 0.2s ease;
+  }
+  .news-dots .dot.active { background: var(--primary-btn); width: 16px; border-radius: 4px; }
+
   /* --- TAB STYLES --- */
   .tab-menu {
     display: flex; background: var(--tab-bg); padding: 6px;
@@ -427,6 +486,16 @@
     <p>Katalog Perkhidmatan & Produk</p>
   </div>
 
+  <!-- NEWS / UPDATE TERKINI -->
+  <div id="news-section" class="news-section">
+    <div class="news-wrap" id="news-wrap">
+      <div class="news-track" id="news-track"></div>
+      <button class="news-nav-btn news-nav-prev" onclick="gerakNewsManual(-1)" aria-label="Sebelum">‹</button>
+      <button class="news-nav-btn news-nav-next" onclick="gerakNewsManual(1)" aria-label="Seterusnya">›</button>
+    </div>
+    <div class="news-dots" id="news-dots"></div>
+  </div>
+
   <div id="installBanner" class="install-banner">
     <div class="install-text">
       <strong>Pasang app ini</strong>
@@ -541,11 +610,16 @@
   const linkSheet3D = ""; 
   const linkSheetAPK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRF1SyJc17xho0M7kQZpWPcliW97koMA1U7VZPNeG7G8txwEMO_pRf7IJqqVKtRn3x9Hp5pnLtLt-aR/pub?output=csv"; // <-- Tampal link "Publish to Web" (CSV) Google Sheets APK anda di sini
   const linkSheet3DProduk = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTliGJHC3hAhtBfMqpIo0rBiy6hadGs8Vlov0JOtJVkVgEpU3Rtniy9opP64HmypKb2M4U1pUnlZ7Gv/pub?output=csv";
+  const linkSheetNews = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaV7-l_JfHacC9bqJlI83PnHJTObLjBXYyQbz__X6GbGD-34ZrtcrKjbilwjqsX-_LhRO4YP5oIYsu/pub?output=csv"; // Lajur: Tajuk, Mesej, Tarikh (opsyenal), Link (opsyenal)
 
   let storIPTV = {};
   let stor3D = {};
   let produkSemasa = null; 
   let tabSemasa = 'iptv';
+
+  let newsList = [];
+  let newsIndex = 0;
+  let newsTimer = null;
 
   document.addEventListener("DOMContentLoaded", () => {
     semakTemaMasaLepas();
@@ -558,6 +632,8 @@
 
     if (linkSheet3DProduk !== "") { muatTurun3DProduk(linkSheet3DProduk); }
     else { muatDataContoh3DProduk(); }
+
+    if (linkSheetNews !== "") { muatTurunNews(linkSheetNews); }
   });
 
   // FUNGSI TUKAR TEMA DAY/NIGHT
@@ -602,6 +678,119 @@
         { Kategori: "Filamen & Alat Ganti", Nama: "Filamen PLA (1kg) - Pelbagai Warna", Harga: "65.00", Deskripsi: "Filamen PLA berkualiti.", Shopee: "" }
     ];
     binaDropdown(dataContoh, "drop-3d", stor3D, "status-3d");
+  }
+
+  // ---------- NEWS / UPDATE TERKINI (carousel auto-gerak) ----------
+
+  function muatTurunNews(url) {
+    fetch(url, { cache: "no-store" })
+      .then(res => { if (!res.ok) throw new Error("Gagal akses"); return res.text(); })
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true, skipEmptyLines: true,
+          transformHeader: (h) => h.trim(),
+          complete: function (results) { renderNews(results.data); }
+        });
+      })
+      .catch(err => {
+        // Jika gagal muat, sembunyikan seksyen news senyap-senyap tanpa ganggu paparan utama.
+        document.getElementById("news-section").style.display = "none";
+      });
+  }
+
+  function renderNews(data) {
+    newsList = [];
+    data.forEach((item) => {
+      const tajuk = (item["Tajuk"] || item["tajuk"] || item["Nama"] || item["nama"] || "").trim();
+      const mesej = (item["Mesej"] || item["mesej"] || item["Nota"] || item["nota"] || item["Deskripsi"] || item["deskripsi"] || "").trim();
+      const tarikh = (item["Tarikh"] || item["tarikh"] || "").trim();
+      const link = (item["Link"] || item["link"] || "").trim();
+
+      if (!tajuk) return;
+      newsList.push({ tajuk, mesej, tarikh, link });
+    });
+
+    lukisNews();
+  }
+
+  function escapeHTML(teks) {
+    const d = document.createElement("div");
+    d.textContent = teks;
+    return d.innerHTML;
+  }
+
+  function lukisNews() {
+    const sectionEl = document.getElementById("news-section");
+    const trackEl = document.getElementById("news-track");
+    const dotsEl = document.getElementById("news-dots");
+    const navBtns = document.querySelectorAll(".news-nav-btn");
+
+    if (newsTimer) { clearInterval(newsTimer); newsTimer = null; }
+
+    if (newsList.length === 0) {
+      sectionEl.style.display = "none";
+      return;
+    }
+
+    sectionEl.style.display = "block";
+    newsIndex = 0;
+
+    trackEl.innerHTML = newsList.map((n) => {
+      const isLink = !!n.link;
+      const tag = isLink ? "a" : "div";
+      const attrs = isLink ? `href="${n.link}" target="_blank" rel="noopener"` : "";
+      return `<${tag} class="news-card" ${attrs}>
+        <div class="news-icon">📢</div>
+        <div class="news-body">
+          <div class="news-title">${escapeHTML(n.tajuk)}</div>
+          ${n.mesej ? `<div class="news-desc">${escapeHTML(n.mesej)}</div>` : ""}
+          ${n.tarikh ? `<div class="news-date">${escapeHTML(n.tarikh)}</div>` : ""}
+        </div>
+      </${tag}>`;
+    }).join("");
+
+    const adaBanyak = newsList.length > 1;
+    navBtns.forEach(b => { b.style.display = adaBanyak ? "flex" : "none"; });
+    dotsEl.innerHTML = adaBanyak
+      ? newsList.map((_, i) => `<span class="dot${i === 0 ? " active" : ""}"></span>`).join("")
+      : "";
+
+    trackEl.style.transition = "none";
+    trackEl.style.transform = "translateX(0%)";
+    requestAnimationFrame(() => { trackEl.style.transition = ""; });
+
+    aktifkanSwipeNews(document.getElementById("news-wrap"));
+
+    if (newsList.length > 2) { mulaAutoplayNews(); }
+  }
+
+  function gerakNews(arah) {
+    if (newsList.length === 0) return;
+    newsIndex = (newsIndex + arah + newsList.length) % newsList.length;
+    const trackEl = document.getElementById("news-track");
+    trackEl.style.transform = `translateX(${-newsIndex * 100}%)`;
+    document.querySelectorAll("#news-dots .dot").forEach((d, i) => d.classList.toggle("active", i === newsIndex));
+  }
+
+  function gerakNewsManual(arah) {
+    gerakNews(arah);
+    mulaAutoplayNews(); // reset timer supaya tak terus lompat lagi sejurus selepas klik manual
+  }
+
+  function mulaAutoplayNews() {
+    if (newsTimer) { clearInterval(newsTimer); newsTimer = null; }
+    if (newsList.length > 2) {
+      newsTimer = setInterval(() => { gerakNews(1); }, 4000);
+    }
+  }
+
+  function aktifkanSwipeNews(wrapEl) {
+    let startX = 0;
+    wrapEl.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    wrapEl.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 30) gerakNewsManual(dx < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   // ---------- APPS INSTALLER (senarai APK) ----------
